@@ -8,22 +8,30 @@ const rateLimit = require("express-rate-limit");
 const InviteLink = require("./models/InviteLink");
 const cors = require("cors");
 
+
+
 const app = express();
+
+app.set("trust proxy", 1);
+
+
 app.use(express.json());
 
 app.use(cors({
   origin: [
     "http://localhost:5500",
-    "https://gujaratitrader-officialrmksews.vercel.app/"
+    "https://gujaratitrader-officialrmksews.vercel.app"
   ],
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type"]
 }));
 
 
+
+
 const inviteLimiter = rateLimit({
   windowMs: 60 * 1000,
-  limit: 5,
+  limit: 50,
   standardHeaders: true,
   legacyHeaders: false,
 });

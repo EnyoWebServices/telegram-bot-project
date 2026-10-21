@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "http://localhost:5500",
-    "https://gujaratitrader-officialrmksews.vercel.app"
+    "https://badshah-broking-official-btt2.vercel.app"
   ],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type"]

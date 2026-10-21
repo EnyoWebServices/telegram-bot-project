@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "http://localhost:5500",
-    "https://YOUR-PROJECT.vercel.app"
+    "https://telegram-bot-project-landing-page.vercel.app/"
   ],
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]

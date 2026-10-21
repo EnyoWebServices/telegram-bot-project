@@ -93,6 +93,7 @@ app.post(
 );
 
 
+
 app.post("/telegram-webhook", async (req, res) => {
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
 
@@ -103,39 +104,108 @@ app.post("/telegram-webhook", async (req, res) => {
     return res.sendStatus(403);
   }
 
-  // Telegram ko jaldi acknowledgement bhejo
+  // Telegram ko turant acknowledgement
   res.sendStatus(200);
 
   try {
-    const update = req.body;
+    const request = req.body.chat_join_request;
+    if (!request) return;
 
-    if (update.chat_join_request) {
-      const request = update.chat_join_request;
+    const channelId = String(request.chat.id);
+    const userId = String(request.from.id);
 
-      await JoinRequest.findOneAndUpdate(
-        {
-          channelId: String(request.chat.id),
-          userId: String(request.from.id),
-        },
+    // Sirf naya record create hoga; duplicate par null milega
+    let newRequest;
+
+    try {
+      newRequest = await JoinRequest.findOneAndUpdate(
+        { channelId, userId },
         {
           $setOnInsert: {
-            channelId: String(request.chat.id),
-            userId: String(request.from.id),
+            channelId,
+            userId,
             requestDate: new Date(request.date * 1000),
             status: "pending",
           },
         },
-        { upsert: true, runValidators: true }
+        {
+          upsert: true,
+          new: true,
+          rawResult: true,
+          runValidators: true,
+        }
       );
-
-      console.log("Join request saved to MongoDB!");
-      console.log("Channel ID:", request.chat.id);
-      console.log("User ID:", request.from.id);
+    } catch (error) {
+      // Concurrent duplicate insert unique index se reject ho sakta hai
+      if (error.code === 11000) {
+        console.log("Duplicate join request; skipping Meta event.");
+        return;
+      }
+      throw error;
     }
+
+    // MongoDB driver/Mongoose result ke version ke hisaab se
+    // upsertedId ya lastErrorObject.upserted check karo
+    const inserted =
+      Boolean(newRequest?.lastErrorObject?.upserted) ||
+      Boolean(newRequest?.upsertedId);
+
+    if (!inserted) {
+      console.log("Existing join request; skipping Meta event.");
+      return;
+    }
+
+    console.log("New join request saved:", userId);
+
+    const pixelId = process.env.META_PIXEL_ID;
+    const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
+
+    if (!pixelId || !accessToken) {
+      console.error("Meta CAPI env variables missing.");
+      return;
+    }
+
+    const eventId = `telegram_join_${channelId}_${userId}`;
+
+    const metaResponse = await fetch(
+      `https://graph.facebook.com/v23.0/${pixelId}/events?access_token=${encodeURIComponent(accessToken)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          data: [
+            {
+              event_name: "Subscribe",
+              event_time: Math.floor(request.date),
+              event_id: eventId,
+              action_source: "chat",
+              user_data: {
+                external_id: [
+                  require("crypto")
+                    .createHash("sha256")
+                    .update(userId)
+                    .digest("hex"),
+                ],
+              },
+            },
+          ],
+        }),
+      }
+    );
+
+    const metaData = await metaResponse.json();
+
+    if (!metaResponse.ok) {
+      console.error("Meta CAPI failed:", metaData);
+      return;
+    }
+
+    console.log("Meta CAPI accepted event:", metaData.events_received);
   } catch (error) {
-    console.error("Database save failed:", error.message);
+    console.error("Webhook processing failed:", error.message);
   }
 });
+
 
 app.get("/", (req, res) => {
   res.send("Telegram webhook server is running.");

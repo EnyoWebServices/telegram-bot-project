@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Our Telegram Channel</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      background: linear-gradient(135deg, #101827, #183c59);
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      padding: 32px 24px;
+      text-align: center;
+      background: #1c2939;
+      border: 1px solid #34465a;
+      border-radius: 20px;
+      box-shadow: 0 18px 50px #0005;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: #249bd7;
+      font-size: 36px;
+    }
+
+    h1 { margin: 0 0 12px; font-size: 27px; }
+    p { color: #c4d0df; line-height: 1.6; }
+
+    button, .join-link {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin-top: 22px;
+      border: 0;
+      border-radius: 10px;
+      background: #229ed9;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: .6; cursor: wait; }
+    .message { min-height: 24px; font-size: 14px; }
+    .hidden { display: none; }
+    .note { font-size: 12px; color: #a9b9ca; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="logo">✈</div>
+    <h1>Join Our Telegram Channel</h1>
+    <p>Click below to get your unique invite link and request access to our private channel.</p>
+
+    <button id="joinBtn">Get Telegram Invite</button>
+    <p id="message" class="message" role="status"></p>
+    <a id="joinLink" class="join-link hidden"
+       href="#" target="_blank" rel="noopener noreferrer">
+       Open Telegram
+    </a>
+    <p class="note">Access may require approval by the channel administrator.</p>
+  </main>
+
+  <script>
+    // Local testing: backend running on your MacBook.
+    // Before deployment, replace this with your public HTTPS backend URL.
+    const API_BASE = "http://localhost:3000";
+
+    const button = document.getElementById("joinBtn");
+    const message = document.getElementById("message");
+    const joinLink = document.getElementById("joinLink");
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      joinLink.classList.add("hidden");
+      message.textContent = "Generating your invite link...";
+
+      try {
+        const response = await fetch(`${API_BASE}/api/create-invite`, {
+          method: "POST"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.inviteLink) {
+          throw new Error(data.error || "Unable to generate invite.");
+        }
+
+        joinLink.href = data.inviteLink;
+        joinLink.classList.remove("hidden");
+        message.textContent = "Your invite link is ready.";
+      } catch (error) {
+        message.textContent =
+          "Could not generate the link. Please try again later.";
+        console.error(error);
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

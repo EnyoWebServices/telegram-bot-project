@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const express = require("express");
@@ -95,9 +94,10 @@ app.post("/api/create-invite", inviteLimiter, async (req, res) => {
 
 // --------------------
 // Meta Conversions API
+// TEST MODE: remove test_event_code after verification
 // --------------------
 
-async function sendMetaSubscribeEvent(request, channelId, userId) {
+async function sendMetaJoinEvent(request, channelId, userId) {
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
 
@@ -111,6 +111,25 @@ async function sendMetaSubscribeEvent(request, channelId, userId) {
     .update(userId)
     .digest("hex");
 
+  const payload = {
+    access_token: accessToken,
+
+    // Temporary Meta Events Manager test code
+    test_event_code: "TEST24425",
+
+    data: [
+      {
+        event_name: "Join",
+        event_time: Math.floor(request.date),
+        event_id: eventId,
+        action_source: "chat",
+        user_data: {
+          external_id: [hashedUserId],
+        },
+      },
+    ],
+  };
+
   const metaResponse = await fetch(
     `https://graph.facebook.com/v23.0/${pixelId}/events`,
     {
@@ -118,20 +137,7 @@ async function sendMetaSubscribeEvent(request, channelId, userId) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        access_token: accessToken,
-        data: [
-          {
-            event_name: "join_request",
-            event_time: Math.floor(request.date),
-            event_id: eventId,
-            action_source: "chat",
-            user_data: {
-              external_id: [hashedUserId],
-            },
-          },
-        ],
-      }),
+      body: JSON.stringify(payload),
     }
   );
 
@@ -143,7 +149,7 @@ async function sendMetaSubscribeEvent(request, channelId, userId) {
   }
 
   console.log(
-    "Meta CAPI accepted event:",
+    "Meta CAPI accepted Join event:",
     metaData.events_received,
     "Event ID:",
     eventId
@@ -179,14 +185,12 @@ app.post("/telegram-webhook", async (req, res) => {
     const channelId = String(request.chat.id);
     const userId = String(request.from.id);
 
-    // Sirf configured Telegram channel ki requests process karo
     if (channelId !== String(process.env.TELEGRAM_CHANNEL_ID)) {
       console.log("Ignoring join request from another channel.");
       return;
     }
 
-    // Unique index (channelId + userId) duplicate records ko rokta hai.
-    // Meta event sirf successful new insert ke baad attempt hoga.
+    // Duplicate webhook par dobara Meta event nahi bhejenge
     try {
       await JoinRequest.create({
         channelId,
@@ -209,9 +213,9 @@ app.post("/telegram-webhook", async (req, res) => {
     console.log("New join request saved:", userId);
 
     try {
-      await sendMetaSubscribeEvent(request, channelId, userId);
+      await sendMetaJoinEvent(request, channelId, userId);
     } catch (error) {
-      console.error("Meta Subscribe event failed:", error.message);
+      console.error("Meta Join event failed:", error.message);
     }
   } catch (error) {
     console.error("Webhook processing failed:", error.message);

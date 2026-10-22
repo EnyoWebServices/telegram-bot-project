@@ -122,7 +122,7 @@ async function sendMetaSubscribeEvent(request, channelId, userId) {
         access_token: accessToken,
         data: [
           {
-            event_name: "Subscribe",
+            event_name: "join_request",
             event_time: Math.floor(request.date),
             event_id: eventId,
             action_source: "chat",

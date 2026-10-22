@@ -94,7 +94,7 @@ app.post("/api/create-invite", inviteLimiter, async (req, res) => {
 
 // --------------------
 // Meta Conversions API
-// TEST MODE: remove test_event_code after verification
+// Production mode: no test_event_code
 // --------------------
 
 async function sendMetaJoinEvent(request, channelId, userId) {
@@ -112,11 +112,6 @@ async function sendMetaJoinEvent(request, channelId, userId) {
     .digest("hex");
 
   const payload = {
-    access_token: accessToken,
-
-    // Temporary Meta Events Manager test code
-    test_event_code: "TEST24425",
-
     data: [
       {
         event_name: "Join",
@@ -131,7 +126,7 @@ async function sendMetaJoinEvent(request, channelId, userId) {
   };
 
   const metaResponse = await fetch(
-    `https://graph.facebook.com/v23.0/${pixelId}/events`,
+    `https://graph.facebook.com/v23.0/${pixelId}/events?access_token=${encodeURIComponent(accessToken)}`,
     {
       method: "POST",
       headers: {
@@ -185,12 +180,13 @@ app.post("/telegram-webhook", async (req, res) => {
     const channelId = String(request.chat.id);
     const userId = String(request.from.id);
 
+    // Sirf configured channel ki requests process karo
     if (channelId !== String(process.env.TELEGRAM_CHANNEL_ID)) {
       console.log("Ignoring join request from another channel.");
       return;
     }
 
-    // Duplicate webhook par dobara Meta event nahi bhejenge
+    // Duplicate request par dobara Meta event nahi bhejna
     try {
       await JoinRequest.create({
         channelId,

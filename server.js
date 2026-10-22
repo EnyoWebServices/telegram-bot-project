@@ -18,8 +18,8 @@ app.use(
     origin: [
       "http://localhost:5500",
       "https://badshah-broking-official-btt2.vercel.app",
-      "http://127.0.0.1:5500/",
-      "https://badshah-broking-official-btt2.onrender.com/"
+      "http://127.0.0.1:5500",
+      "https://badshah-broking-official-btt2.onrender.com"
     ],
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type"],

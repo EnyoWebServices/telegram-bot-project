@@ -1,3 +1,4 @@
+
 require("dotenv").config();
 
 const express = require("express");
@@ -19,7 +20,8 @@ app.use(
       "http://localhost:5500",
       "https://badshah-broking-official-btt2.vercel.app",
       "http://127.0.0.1:5500",
-      "https://badshah-broking-official-btt2.onrender.com"
+      "https://badshah-broking-official-btt2.onrender.com",
+      "https://goutam-jha-official-dhnrj.vercel.app"
     ],
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
@@ -59,6 +61,7 @@ app.post("/api/create-invite-by-bot", inviteLimiter, async (req, res) => {
           name: `lp-${inviteId.slice(0, 20)}`,
           creates_join_request: true,
         }),
+        signal: AbortSignal.timeout(10000),
       }
     );
 
@@ -94,31 +97,31 @@ app.post("/api/create-invite-by-bot", inviteLimiter, async (req, res) => {
   }
 });
 
-
-
-
+// --------------------
+// Return Existing Invite Link
+// --------------------
 
 app.post("/api/create-invite", (req, res) => {
   const inviteLink = process.env.TELEGRAM_INVITE_LINK;
 
   if (!inviteLink) {
     return res.status(500).json({
-      error: "Invite link is not configured"
+      error: "Invite link is not configured",
     });
   }
 
   return res.json({ inviteLink });
 });
 
-
-
-
-
-
+// --------------------
+// Meta Conversions API
+// Test Event Code is optional
+// --------------------
 
 async function sendMetaJoinEvent(request, channelId, userId) {
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
+  const testEventCode = process.env.META_TEST_EVENT_CODE?.trim();
 
   if (!pixelId || !accessToken) {
     throw new Error("Meta CAPI environment variables are missing");
@@ -144,6 +147,11 @@ async function sendMetaJoinEvent(request, channelId, userId) {
     ],
   };
 
+  // Include test_event_code only when configured.
+  if (testEventCode) {
+    payload.test_event_code = testEventCode;
+  }
+
   const metaResponse = await fetch(
     `https://graph.facebook.com/v23.0/${pixelId}/events?access_token=${encodeURIComponent(accessToken)}`,
     {
@@ -152,6 +160,7 @@ async function sendMetaJoinEvent(request, channelId, userId) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000),
     }
   );
 
@@ -163,7 +172,9 @@ async function sendMetaJoinEvent(request, channelId, userId) {
   }
 
   console.log(
-    "Meta CAPI accepted Join event:",
+    testEventCode
+      ? "Meta CAPI accepted TEST Join event:"
+      : "Meta CAPI accepted PRODUCTION Join event:",
     metaData.events_received,
     "Event ID:",
     eventId
@@ -186,7 +197,7 @@ app.post("/telegram-webhook", async (req, res) => {
     return res.sendStatus(403);
   }
 
-  // Telegram ko turant acknowledgement
+  // Acknowledge Telegram immediately.
   res.sendStatus(200);
 
   try {
@@ -199,13 +210,13 @@ app.post("/telegram-webhook", async (req, res) => {
     const channelId = String(request.chat.id);
     const userId = String(request.from.id);
 
-    // Sirf configured channel ki requests process karo
+    // Process requests only for the configured channel.
     if (channelId !== String(process.env.TELEGRAM_CHANNEL_ID)) {
       console.log("Ignoring join request from another channel.");
       return;
     }
 
-    // Duplicate request par dobara Meta event nahi bhejna
+    // Prevent duplicate requests from sending duplicate Meta events.
     try {
       await JoinRequest.create({
         channelId,
@@ -243,6 +254,19 @@ app.post("/telegram-webhook", async (req, res) => {
 
 app.get("/", (req, res) => {
   res.send("Telegram webhook server is running.");
+});
+
+// --------------------
+// Public Frontend Configuration
+// --------------------
+
+app.get("/api/public-config", (req, res) => {
+  res.set("Cache-Control", "public, max-age=60");
+
+  return res.json({
+    metaPixelId: process.env.META_PIXEL_ID || "",
+    telegramInviteLink: process.env.TELEGRAM_INVITE_LINK || ""
+  });
 });
 
 // --------------------

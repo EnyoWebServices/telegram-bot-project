@@ -37,67 +37,64 @@ const inviteLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// app.post("/api/create-invite", inviteLimiter, async (req, res) => {
-//   try {
-//     const inviteId = randomUUID();
-//     const channelId = process.env.TELEGRAM_CHANNEL_ID;
-//     const token = process.env.TELEGRAM_BOT_TOKEN;
+app.post("/api/create-invite-by-bot", inviteLimiter, async (req, res) => {
+  try {
+    const inviteId = randomUUID();
+    const channelId = process.env.TELEGRAM_CHANNEL_ID;
+    const token = process.env.TELEGRAM_BOT_TOKEN;
 
-//     if (!channelId || !token) {
-//       return res.status(500).json({
-//         error: "Server configuration missing",
-//       });
-//     }
+    if (!channelId || !token) {
+      return res.status(500).json({
+        error: "Server configuration missing",
+      });
+    }
 
-//     const telegramResponse = await fetch(
-//       `https://api.telegram.org/bot${token}/createChatInviteLink`,
-//       {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({
-//           chat_id: channelId,
-//           name: `lp-${inviteId.slice(0, 20)}`,
-//           creates_join_request: true,
-//         }),
-//       }
-//     );
+    const telegramResponse = await fetch(
+      `https://api.telegram.org/bot${token}/createChatInviteLink`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: channelId,
+          name: `lp-${inviteId.slice(0, 20)}`,
+          creates_join_request: true,
+        }),
+      }
+    );
 
-//     const telegramData = await telegramResponse.json();
+    const telegramData = await telegramResponse.json();
 
-//     if (!telegramResponse.ok || !telegramData.ok) {
-//       console.error(
-//         "Telegram invite creation failed:",
-//         telegramData.description || telegramResponse.status
-//       );
+    if (!telegramResponse.ok || !telegramData.ok) {
+      console.error(
+        "Telegram invite creation failed:",
+        telegramData.description || telegramResponse.status
+      );
 
-//       return res.status(502).json({
-//         error: "Could not create invite link",
-//       });
-//     }
+      return res.status(502).json({
+        error: "Could not create invite link",
+      });
+    }
 
-//     const inviteLink = telegramData.result.invite_link;
+    const inviteLink = telegramData.result.invite_link;
 
-//     await InviteLink.create({
-//       inviteId,
-//       channelId: String(channelId),
-//       inviteLink,
-//       status: "created",
-//     });
+    await InviteLink.create({
+      inviteId,
+      channelId: String(channelId),
+      inviteLink,
+      status: "created",
+    });
 
-//     return res.json({ inviteLink });
-//   } catch (error) {
-//     console.error("Invite API failed:", error.message);
+    return res.json({ inviteLink });
+  } catch (error) {
+    console.error("Invite API failed:", error.message);
 
-//     return res.status(500).json({
-//       error: "Could not generate invite link",
-//     });
-//   }
-// });
+    return res.status(500).json({
+      error: "Could not generate invite link",
+    });
+  }
+});
 
-// --------------------
-// Meta Conversions API
-// Production mode: no test_event_code
-// --------------------
+
 
 
 

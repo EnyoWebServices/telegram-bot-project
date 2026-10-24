@@ -1,54 +1,67 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#e0f7fa" />
+
+  <title>Join Telegram Channel</title>
+
   <!-- Meta Pixel Code -->
   <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '2288105185371617');
+    !function(f,b,e,v,n,t,s) {
+      if(f.fbq)return;
+      n=f.fbq=function() {
+        n.callMethod
+          ? n.callMethod.apply(n,arguments)
+          : n.queue.push(arguments);
+      };
+      if(!f._fbq)f._fbq=n;
+      n.push=n;
+      n.loaded=true;
+      n.version='2.0';
+      n.queue=[];
+      t=b.createElement(e);
+      t.async=true;
+      t.src=v;
+      s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s);
+    }(window,document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+
+    fbq('init', '2345229332905697');
     fbq('track', 'PageView');
   </script>
 
   <noscript>
     <img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=2288105185371617&ev=PageView&noscript=1"
-      alt=""
-    />
+      src="https://www.facebook.com/tr?id=2345229332905697&ev=PageView&noscript=1"
+      alt="" />
   </noscript>
   <!-- End Meta Pixel Code -->
 
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Join Telegram Channel</title>
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #e0f7fa, #e1bee7);
       min-height: 100vh;
+      margin: 0;
+      padding: 20px 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
-    }
-
-    .elementor img {
-      border: none;
-      border-radius: 90px;
-      box-shadow: none;
-      height: auto;
-      max-width: 100%;
     }
 
     .card {
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       background: rgba(255, 255, 255, 0.7);
       border-radius: 1rem;
       padding: 2rem;
@@ -56,6 +69,15 @@
       width: 100%;
       text-align: center;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-image {
+      width: 128px;
+      height: 128px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 4px solid white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .btn-telegram {
@@ -68,10 +90,11 @@
       font-weight: bold;
       color: white;
       background: linear-gradient(90deg, #0088cc, #00bcd4);
-      transition: 0.3s;
+      transition: background 0.3s, transform 0.3s, opacity 0.3s;
       width: 100%;
       border: none;
       cursor: pointer;
+      font-size: 15px;
     }
 
     .btn-telegram:hover:not(:disabled) {
@@ -80,8 +103,9 @@
     }
 
     .btn-telegram:disabled {
-      opacity: 0.7;
+      opacity: 0.65;
       cursor: wait;
+      transform: none;
     }
 
     .feature {
@@ -91,47 +115,61 @@
       font-size: 0.95rem;
     }
 
-    #joinMessage {
-      font-size: 0.9rem;
-      margin-top: -12px;
+    #joinError {
+      color: #dc2626;
+      font-size: 14px;
       margin-bottom: 16px;
+    }
+
+    @media (max-width: 420px) {
+      .card {
+        padding: 1.5rem;
+      }
     }
   </style>
 </head>
 
 <body>
-  <div class="card">
+  <main class="card">
 
     <!-- Profile Image -->
-    <div class="w-32 h-32 mx-auto mb-4">
+    <div class="mb-4">
       <img
-        src="https://telegram-ads.riyazshaikh.com/wp-content/uploads/2025/06/IMG-20250627-WA0004.jpg"
+        src="https://telegram-ads.riyazshaikh.com/wp-content/uploads/2026/07/gautm.jpg"
         alt="Profile"
-        class="w-full h-full rounded-full object-cover shadow-lg border-4 border-white"
+        class="profile-image"
       />
     </div>
 
     <!-- Heading -->
     <h1 class="text-xl font-extrabold text-gray-800 mb-1">
-      BAADSHAH BROKING OFFICIAL
+      GAUTAM KUMAR JHA OFFICIAL 💸🏆
     </h1>
 
     <!-- Experience -->
     <p class="text-red-600 font-semibold mb-4">
-      📊 Experience of 27 years❇️ 📊
+      📊 Experience of 10+ years❇️ 📊
     </p>
 
-    <!-- Telegram Join Button -->
-    <button id="telegramJoinBtn" type="button" class="btn-telegram mb-6">
+    <!-- Telegram Button -->
+    <button
+      id="joinTelegram"
+      type="button"
+      class="btn-telegram mb-4"
+    >
       <svg xmlns="http://www.w3.org/2000/svg"
-        width="20" height="20" fill="currentColor" viewBox="0 0 16 16"
-        aria-hidden="true">
+        width="20" height="20" fill="currentColor"
+        viewBox="0 0 16 16" aria-hidden="true">
         <path d="M16 8a8 8 0 1 1-16 0 8 8 0 0 1 16 0zM6.79 10.89l-.27 3.67c.39 0 .56-.17.77-.38l1.85-1.76 3.84 2.8c.7.39 1.19.19 1.36-.65l2.47-11.59c.22-.98-.35-1.37-1.05-1.14L1.13 6.24c-.95.37-.93.9-.17 1.14l3.57 1.11 8.3-5.23c.39-.26.74-.12.45.14L6.79 10.89z"/>
       </svg>
-      JOIN TELEGRAM 💬
+
+      <span id="joinText">JOIN TELEGRAM 💬</span>
     </button>
 
-    <p id="joinMessage" role="status" aria-live="polite"></p>
+    <!-- Error Message -->
+    <p id="joinError" role="alert" hidden>
+      Invite link nahi ban saka. Internet check karke dobara try karein.
+    </p>
 
     <!-- Features -->
     <p class="text-red-600 font-bold mb-4">
@@ -142,12 +180,15 @@
       <div class="feature">
         📊 <span><b>Live Daily Trades</b> – From my portfolio to yours!</span>
       </div>
+
       <div class="feature">
         🔥 <span><b>Exclusive Signals</b> – Get the same trades I take!</span>
       </div>
+
       <div class="feature">
         💯 <span><b>High Accuracy</b> – Consistent proven strategy!</span>
       </div>
+
       <div class="feature">
         💡 <span><b>Real-Time Updates</b> – Instant market alerts!</span>
       </div>
@@ -159,59 +200,134 @@
     </h2>
 
     <p class="text-red-600 font-semibold">
-      अगर हां तो दिए गए टेलीग्राम बटन पर दबाएं !
+      अगर हां तो दिए गए टेलीग्राम बटन पर दबाएं!
     </p>
 
-  </div>
+  </main>
 
   <script>
+    // Live Render backend URL
     const API_URL =
-      "http://localhost:3000/api/create-invite";
+      "https://telegram-bot-project-iqzg.onrender.com";
 
-    const button = document.getElementById("telegramJoinBtn");
-    const message = document.getElementById("joinMessage");
+    const button = document.getElementById("joinTelegram");
+    const buttonText = document.getElementById("joinText");
+    const errorMessage = document.getElementById("joinError");
 
+    let requestInProgress = false;
+
+    // Read browser cookies
+    function getCookie(name) {
+      const prefix = name + "=";
+
+      const cookie = document.cookie
+        .split("; ")
+        .find(row => row.startsWith(prefix));
+
+      return cookie
+        ? decodeURIComponent(cookie.substring(prefix.length))
+        : null;
+    }
+
+    // Collect Meta attribution information
+    function getAttribution() {
+      const params = new URLSearchParams(window.location.search);
+
+      const fbp = getCookie("_fbp");
+      let fbc = getCookie("_fbc");
+
+      const fbclid = params.get("fbclid");
+
+      // Build fbc only when fbclid is available
+      // and the _fbc cookie has not already been set.
+      if (!fbc && fbclid) {
+        fbc = "fb.1." + Date.now() + "." + fbclid;
+      }
+
+      return {
+        fbp: fbp || null,
+        fbc: fbc || null,
+
+        // This is for your own campaign tracking.
+        // It is not a replacement for Meta click matching.
+        campaignId:
+          params.get("campaign_id") ||
+          params.get("utm_campaign") ||
+          null
+      };
+    }
+
+    // Reset button when returning from Telegram or another app
+    function resetJoinButton() {
+      if (requestInProgress) return;
+
+      button.disabled = false;
+      buttonText.textContent = "JOIN TELEGRAM 💬";
+      errorMessage.hidden = true;
+    }
+
+    // Handles browser back-forward cache and page restoration
+    window.addEventListener("pageshow", function () {
+      requestInProgress = false;
+      resetJoinButton();
+    });
+
+    // Runs when user returns to the visible website
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) {
+        requestInProgress = false;
+        resetJoinButton();
+      }
+    });
+
+    // Telegram CTA click
     button.addEventListener("click", async function () {
-      if (button.disabled) return;
+      if (requestInProgress) return;
 
+      requestInProgress = true;
       button.disabled = true;
-      message.textContent = "Opening Telegram...";
-      message.style.color = "#374151";
+      errorMessage.hidden = true;
+      buttonText.textContent = "PLEASE WAIT...";
 
       try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
+        const response = await fetch(
+          API_URL + "/api/create-invite-by-bot",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(getAttribution())
           }
-        });
+        );
 
-        const data = await response.json();
-
-        if (!response.ok || !data.inviteLink) {
-          throw new Error("Invite link unavailable");
+        if (!response.ok) {
+          throw new Error(
+            "Invite API returned status " + response.status
+          );
         }
 
-        // Only open a valid Telegram invite link.
-        const inviteUrl = new URL(data.inviteLink);
+        const data = await response.json();
+        const inviteLink = data.inviteLink;
 
+        // Only allow Telegram invite links
         if (
-          inviteUrl.protocol !== "https:" ||
-          !["t.me", "telegram.me", "www.t.me"].includes(inviteUrl.hostname)
+          typeof inviteLink !== "string" ||
+          !/^https:\/\/t\.me\/[A-Za-z0-9_/?+=-]+$/i.test(inviteLink)
         ) {
           throw new Error("Invalid Telegram invite link");
         }
 
-        window.location.href = inviteUrl.href;
+        // Navigate to Telegram
+        window.location.assign(inviteLink);
 
       } catch (error) {
         console.error("Telegram invite error:", error);
 
-        message.textContent =
-          "Telegram link open nahi hua. Please dobara try karein.";
-
-        message.style.color = "#dc2626";
+        requestInProgress = false;
         button.disabled = false;
+        buttonText.textContent = "JOIN TELEGRAM 💬";
+        errorMessage.hidden = false;
       }
     });
   </script>

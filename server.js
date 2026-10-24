@@ -362,6 +362,23 @@ async function startServer() {
 
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);
+
+      setInterval(async () => {
+        try {
+          const response = await fetch(
+            "https://telegram-bot-project-iqzg.onrender.com/",
+            { signal: AbortSignal.timeout(10000) }
+          );
+
+          if (!response.ok) {
+            console.error("Keep-alive request failed:", response.status);
+          }
+
+          await response.text();
+        } catch (error) {
+          console.error("Keep-alive request failed:", error.message);
+        }
+      }, 10 * 60 * 1000);
     });
   } catch (error) {
     console.error("Startup failed:", error.message);

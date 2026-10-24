@@ -71,13 +71,26 @@
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     }
 
+    /* Profile image centered */
+    .profile-container {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin: 0 auto 1rem;
+    }
+
     .profile-image {
+      display: block;
       width: 128px;
       height: 128px;
       object-fit: cover;
       border-radius: 50%;
       border: 4px solid white;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .btn-telegram {
@@ -132,8 +145,8 @@
 <body>
   <main class="card">
 
-    <!-- Profile Image -->
-    <div class="mb-4">
+    <!-- Centered Profile Image -->
+    <div class="profile-container">
       <img
         src="https://telegram-ads.riyazshaikh.com/wp-content/uploads/2026/07/gautm.jpg"
         alt="Profile"
@@ -206,7 +219,7 @@
   </main>
 
   <script>
-    // Live Render backend URL
+    // Render backend URL
     const API_URL =
       "https://telegram-bot-project-iqzg.onrender.com";
 
@@ -238,8 +251,7 @@
 
       const fbclid = params.get("fbclid");
 
-      // Build fbc only when fbclid is available
-      // and the _fbc cookie has not already been set.
+      // Create fbc only when fbclid exists and _fbc is absent
       if (!fbc && fbclid) {
         fbc = "fb.1." + Date.now() + "." + fbclid;
       }
@@ -247,9 +259,6 @@
       return {
         fbp: fbp || null,
         fbc: fbc || null,
-
-        // This is for your own campaign tracking.
-        // It is not a replacement for Meta click matching.
         campaignId:
           params.get("campaign_id") ||
           params.get("utm_campaign") ||
@@ -257,25 +266,22 @@
       };
     }
 
-    // Reset button when returning from Telegram or another app
+    // Reset the button after returning to the website
     function resetJoinButton() {
-      if (requestInProgress) return;
-
+      requestInProgress = false;
       button.disabled = false;
       buttonText.textContent = "JOIN TELEGRAM 💬";
       errorMessage.hidden = true;
     }
 
-    // Handles browser back-forward cache and page restoration
+    // Restore button when page is shown again
     window.addEventListener("pageshow", function () {
-      requestInProgress = false;
       resetJoinButton();
     });
 
-    // Runs when user returns to the visible website
+    // Restore button when user returns from Telegram/app
     document.addEventListener("visibilitychange", function () {
       if (!document.hidden) {
-        requestInProgress = false;
         resetJoinButton();
       }
     });
@@ -310,15 +316,15 @@
         const data = await response.json();
         const inviteLink = data.inviteLink;
 
-        // Only allow Telegram invite links
+        // Accept Telegram invite links only
         if (
           typeof inviteLink !== "string" ||
-          !/^https:\/\/t\.me\/[A-Za-z0-9_/?+=-]+$/i.test(inviteLink)
+          !/^https:\/\/t\.me\//i.test(inviteLink)
         ) {
           throw new Error("Invalid Telegram invite link");
         }
 
-        // Navigate to Telegram
+        // Open Telegram in the current tab
         window.location.assign(inviteLink);
 
       } catch (error) {

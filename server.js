@@ -8,40 +8,59 @@ const InviteLink = require("./models/InviteLink");
 const { randomUUID, createHash } = require("crypto");
 const rateLimit = require("express-rate-limit");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
 app.set("trust proxy", 1);
-app.use(express.json());
+app.use(express.json({ limit: "20kb" }));
+
+const allowedOrigins = [
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+  "http://localhost:3000",
+  "https://badshah-broking-official-btt2.vercel.app",
+  "https://badshah-broking-official-btt2.onrender.com",
+  "https://goutam-jha-official-dhnrj.vercel.app",
+];
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5500",
-      "https://badshah-broking-official-btt2.vercel.app",
-      "http://127.0.0.1:5500",
-      "https://badshah-broking-official-btt2.onrender.com",
-      "https://goutam-jha-official-dhnrj.vercel.app"
-    ],
+    origin: allowedOrigins,
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
   })
 );
 
 // --------------------
-// Create Telegram Invite
+// Landing page
+// --------------------
+
+const landingPath = path.join(__dirname, "landing-page");
+
+app.use(express.static(landingPath));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(landingPath, "index.html"));
+});
+
+// --------------------
+// Rate limit
 // --------------------
 
 const inviteLimiter = rateLimit({
   windowMs: 60 * 1000,
-  limit: 50,
+  limit: 30,
   standardHeaders: true,
   legacyHeaders: false,
 });
 
+// --------------------
+// Create unique invite + save attribution data
+// --------------------
+
 app.post("/api/create-invite-by-bot", inviteLimiter, async (req, res) => {
   try {
-    const inviteId = randomUUID();
     const channelId = process.env.TELEGRAM_CHANNEL_ID;
     const token = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -50,6 +69,20 @@ app.post("/api/create-invite-by-bot", inviteLimiter, async (req, res) => {
         error: "Server configuration missing",
       });
     }
+
+    const inviteId = randomUUID();
+
+    // Only accept strings of reasonable length.
+    const cleanIdentifier = (value, maxLength = 500) => {
+      if (typeof value !== "string") return null;
+      const trimmed = value.trim();
+      if (!trimmed || trimmed.length > maxLength) return null;
+      return trimmed;
+    };
+
+    const fbp = cleanIdentifier(req.body?.fbp);
+    const fbc = cleanIdentifier(req.body?.fbc);
+    const campaignId = cleanIdentifier(req.body?.campaignId, 100);
 
     const telegramResponse = await fetch(
       `https://api.telegram.org/bot${token}/createChatInviteLink`,
@@ -84,7 +117,17 @@ app.post("/api/create-invite-by-bot", inviteLimiter, async (req, res) => {
       inviteId,
       channelId: String(channelId),
       inviteLink,
+      fbp,
+      fbc,
+      campaignId,
       status: "created",
+    });
+
+    console.log("Invite created with attribution:", {
+      inviteId,
+      hasFbp: Boolean(fbp),
+      hasFbc: Boolean(fbc),
+      hasCampaignId: Boolean(campaignId),
     });
 
     return res.json({ inviteLink });
@@ -98,7 +141,9 @@ app.post("/api/create-invite-by-bot", inviteLimiter, async (req, res) => {
 });
 
 // --------------------
-// Return Existing Invite Link
+// Existing shared invite endpoint
+// Note: this endpoint does not associate a visitor
+// with a unique invite record.
 // --------------------
 
 app.post("/api/create-invite", (req, res) => {
@@ -115,10 +160,9 @@ app.post("/api/create-invite", (req, res) => {
 
 // --------------------
 // Meta Conversions API
-// Test Event Code is optional
 // --------------------
 
-async function sendMetaJoinEvent(request, channelId, userId) {
+async function sendMetaJoinEvent(request, channelId, userId, attribution = {}) {
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
   const testEventCode = process.env.META_TEST_EVENT_CODE?.trim();
@@ -133,6 +177,19 @@ async function sendMetaJoinEvent(request, channelId, userId) {
     .update(userId)
     .digest("hex");
 
+  const userData = {
+    external_id: [hashedUserId],
+  };
+
+  // Include Meta browser identifiers only when available.
+  if (attribution.fbp) {
+    userData.fbp = attribution.fbp;
+  }
+
+  if (attribution.fbc) {
+    userData.fbc = attribution.fbc;
+  }
+
   const payload = {
     data: [
       {
@@ -140,14 +197,11 @@ async function sendMetaJoinEvent(request, channelId, userId) {
         event_time: Math.floor(request.date),
         event_id: eventId,
         action_source: "chat",
-        user_data: {
-          external_id: [hashedUserId],
-        },
+        user_data: userData,
       },
     ],
   };
 
-  // Include test_event_code only when configured.
   if (testEventCode) {
     payload.test_event_code = testEventCode;
   }
@@ -156,9 +210,7 @@ async function sendMetaJoinEvent(request, channelId, userId) {
     `https://graph.facebook.com/v23.0/${pixelId}/events?access_token=${encodeURIComponent(accessToken)}`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(15000),
     }
@@ -177,14 +229,18 @@ async function sendMetaJoinEvent(request, channelId, userId) {
       : "Meta CAPI accepted PRODUCTION Join event:",
     metaData.events_received,
     "Event ID:",
-    eventId
+    eventId,
+    "Has fbp:",
+    Boolean(attribution.fbp),
+    "Has fbc:",
+    Boolean(attribution.fbc)
   );
 
   return metaData;
 }
 
 // --------------------
-// Telegram Join Request Webhook
+// Telegram join-request webhook
 // --------------------
 
 app.post("/telegram-webhook", async (req, res) => {
@@ -203,20 +259,36 @@ app.post("/telegram-webhook", async (req, res) => {
   try {
     const request = req.body.chat_join_request;
 
-    if (!request) {
-      return;
-    }
+    if (!request) return;
 
     const channelId = String(request.chat.id);
     const userId = String(request.from.id);
 
-    // Process requests only for the configured channel.
     if (channelId !== String(process.env.TELEGRAM_CHANNEL_ID)) {
       console.log("Ignoring join request from another channel.");
       return;
     }
 
-    // Prevent duplicate requests from sending duplicate Meta events.
+    // Find the exact invite used for this join request.
+    const telegramInviteUrl = request.invite_link?.invite_link;
+
+    let inviteRecord = null;
+
+    if (telegramInviteUrl) {
+      inviteRecord = await InviteLink.findOne({
+        channelId,
+        inviteLink: telegramInviteUrl,
+      });
+
+      if (inviteRecord) {
+        inviteRecord.status = "join_requested";
+        inviteRecord.joinRequestedAt = new Date(request.date * 1000);
+        inviteRecord.joinedUserId = userId;
+        await inviteRecord.save();
+      }
+    }
+
+    // Preserve existing duplicate protection.
     try {
       await JoinRequest.create({
         channelId,
@@ -237,9 +309,13 @@ app.post("/telegram-webhook", async (req, res) => {
     }
 
     console.log("New join request saved:", userId);
+    console.log("Matching invite found:", Boolean(inviteRecord));
 
     try {
-      await sendMetaJoinEvent(request, channelId, userId);
+      await sendMetaJoinEvent(request, channelId, userId, {
+        fbp: inviteRecord?.fbp,
+        fbc: inviteRecord?.fbc,
+      });
     } catch (error) {
       console.error("Meta Join event failed:", error.message);
     }
@@ -249,15 +325,7 @@ app.post("/telegram-webhook", async (req, res) => {
 });
 
 // --------------------
-// Health Check
-// --------------------
-
-app.get("/", (req, res) => {
-  res.send("Telegram webhook server is running.");
-});
-
-// --------------------
-// Public Frontend Configuration
+// Public frontend configuration
 // --------------------
 
 app.get("/api/public-config", (req, res) => {
@@ -265,12 +333,20 @@ app.get("/api/public-config", (req, res) => {
 
   return res.json({
     metaPixelId: process.env.META_PIXEL_ID || "",
-    telegramInviteLink: process.env.TELEGRAM_INVITE_LINK || ""
+    telegramInviteLink: process.env.TELEGRAM_INVITE_LINK || "",
   });
 });
 
 // --------------------
-// Start Server
+// Health check
+// --------------------
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+// --------------------
+// Start server
 // --------------------
 
 async function startServer() {
